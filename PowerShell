@@ -1,0 +1,31 @@
+$sourceFolder = "C:\source"
+$replicaFolder = "C:\replica"
+
+# Check if source folder exists
+if (!(Test-Path $sourceFolder)) {
+    Write-Host "Source folder not found"
+    Exit
+}
+
+# Check if replica folder exists, create it if it doesn't
+if (!(Test-Path $replicaFolder)) {
+    New-Item -ItemType Directory -Path $replicaFolder | Out-Null
+}
+
+# Get a list of files in the source folder
+$sourceFiles = Get-ChildItem -Path $sourceFolder -Recurse -File
+
+# Copy each file to the replica folder
+foreach ($file in $sourceFiles) {
+    $replicaFile = Join-Path -Path $replicaFolder -ChildPath $file.FullName.Substring($sourceFolder.Length)
+    Copy-Item -Path $file.FullName -Destination $replicaFile -Force
+}
+
+# Remove files from the replica folder that don't exist in the source folder
+$replicaFiles = Get-ChildItem -Path $replicaFolder -Recurse -File
+foreach ($file in $replicaFiles) {
+    $sourceFile = Join-Path -Path $sourceFolder -ChildPath $file.FullName.Substring($replicaFolder.Length)
+    if (!(Test-Path $sourceFile)) {
+        Remove-Item -Path $file.FullName -Force
+    }
+}
